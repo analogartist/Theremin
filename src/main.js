@@ -145,8 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (tipX > splitPoint) {
                                 // Map tip.x from [0.3, 1.0] to [0, 1]
                                 const normX = (tipX - splitPoint) / (1 - splitPoint);
-                                const noteIndex = Math.floor(normX * 24);
-                                if (noteIndex >= 0 && noteIndex < 24) currentActiveNotes.add(noteIndex);
+                                const noteIndex = Math.floor(normX * 18);
+                                if (noteIndex >= 0 && noteIndex < 18) currentActiveNotes.add(noteIndex);
                             }
                         });
                     } else {
@@ -161,8 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             const indexX = 1.0 - index.x; // Invert X
                             if (indexX > splitPoint) {
                                 const normX = (indexX - splitPoint) / (1 - splitPoint);
-                                const noteIndex = Math.floor(normX * 24);
-                                if (noteIndex >= 0 && noteIndex < 24) currentActiveNotes.add(noteIndex);
+                                const noteIndex = Math.floor(normX * 18);
+                                if (noteIndex >= 0 && noteIndex < 18) currentActiveNotes.add(noteIndex);
                             }
                         }
                     }

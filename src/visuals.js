@@ -38,7 +38,7 @@ export class Visualizer {
         }
     }
 
-    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5) {
+    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5, pitchBendOffset = 0) {
         // Clear
         this.ctx.fillStyle = 'rgba(15, 15, 19, 0.2)';
         this.ctx.fillRect(0, 0, this.width, this.height);
@@ -87,6 +87,14 @@ export class Visualizer {
 
         this.ctx.fillStyle = 'rgba(0, 242, 255, 0.5)';
         this.ctx.fillText("PIANO KEYS", this.width * 0.4, 50);
+
+        // Pitch Bend Indicator (Melody Mode only)
+        if (!isChordsMode && pitchBendOffset !== 0) {
+            const bendText = pitchBendOffset > 0 ? `+${pitchBendOffset}` : `${pitchBendOffset}`;
+            this.ctx.font = 'bold 24px Outfit';
+            this.ctx.fillStyle = '#00f2ff';
+            this.ctx.fillText(`BEND: ${bendText}`, this.width * 0.65, 50);
+        }
 
         // Draw Keys
         this.keys.forEach((key, index) => {

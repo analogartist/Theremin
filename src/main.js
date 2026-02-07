@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let volumeGrabY = null; // Y position when pinch started
     let volumeGrabValue = 0.5; // Volume value when pinch started
     let audioInitialized = false; // Track if Tone.js is ready
+    let pitchBendOffset = 0; // Current pitch bend in semitones (-5 to +5)
 
     // Callback for when hand tracking results are available
     const onResults = (results) => {
@@ -151,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     } else {
                         // MELODY MODE: Play ONLY on Pinch (Thumb + Index)
-                        // Trigger note at Index Finger X position
+                        // X-axis selects base note, Z-axis bends pitch ±5 semitones
                         const thumb = landmarks[4];
                         const index = landmarks[8];
                         const dist = Math.sqrt(Math.pow(thumb.x - index.x, 2) + Math.pow(thumb.y - index.y, 2));
@@ -160,9 +161,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (dist < 0.05) { // Pinch detected
                             const indexX = 1.0 - index.x; // Invert X
                             if (indexX > splitPoint) {
+                                // Base note from X position
                                 const normX = (indexX - splitPoint) / (1 - splitPoint);
-                                const noteIndex = Math.floor(normX * 18);
-                                if (noteIndex >= 0 && noteIndex < 18) currentActiveNotes.add(noteIndex);
+                                const baseNoteIndex = Math.floor(normX * 18);
+
+                                // Pitch bend from Z position (depth)
+                                const zNeutral = -0.1; // Calibrated neutral position
+                                const zRange = 0.15;   // Sensitivity
+                                const zOffset = index.z - zNeutral;
+                                const semitoneOffset = Math.round((zOffset / zRange) * -5); // Closer = higher pitch
+                                const clampedOffset = Math.max(-5, Math.min(5, semitoneOffset));
+                                pitchBendOffset = clampedOffset; // Store for visual feedback
+
+                                // Final note with pitch bend
+                                const pitchBendedIndex = baseNoteIndex + clampedOffset;
+                                const finalIndex = Math.max(0, Math.min(17, pitchBendedIndex));
+
+                                if (finalIndex >= 0 && finalIndex < 18) {
+                                    currentActiveNotes.add(finalIndex);
+                                }
                             }
                         }
                     }
@@ -187,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         audio.setVolume(volume);
 
         // Update Visualizer with extra state
-        visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume);
+        visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, pitchBendOffset);
     };
 
     const tracker = new HandTracker(videoElement, onResults);

@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastFistState = false; // For debouncing toggle
     let modeToggleCooldown = 0;
     let volume = 0.5; // Default Volume
+    let volumeGrabY = null; // Y position when pinch started
+    let volumeGrabValue = 0.5; // Volume value when pinch started
 
     // Callback for when hand tracking results are available
     const onResults = (results) => {
@@ -74,17 +76,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (x < splitPoint) {
                     // --- LEFT ZONE: CONTROL (0% - 30%) ---
 
-                    // 1. Volume Control (Pinch-to-Slide)
+                    // 1. Volume Control (Pinch-to-Slide - Relative Motion)
                     const thumb = landmarks[4];
                     const index = landmarks[8];
                     const pinchDist = Math.sqrt(Math.pow(thumb.x - index.x, 2) + Math.pow(thumb.y - index.y, 2));
 
                     if (pinchDist < 0.05) {
-                        // PINCHED: Update Volume
-                        // Map Y (0-1) to Volume (1-0)
-                        volume = Math.max(0, Math.min(1, 1 - wrist.y));
+                        // PINCHED
+                        if (volumeGrabY === null) {
+                            // First frame of pinch - record starting position and current volume
+                            volumeGrabY = wrist.y;
+                            volumeGrabValue = volume;
+                        } else {
+                            // Subsequent frames - adjust volume based on delta from grab point
+                            const deltaY = volumeGrabY - wrist.y; // Positive = moved up, Negative = moved down
+                            volume = Math.max(0, Math.min(1, volumeGrabValue + deltaY));
+                        }
+                    } else {
+                        // RELEASED - reset grab tracking
+                        volumeGrabY = null;
+                        volumeGrabValue = volume; // Lock current volume
                     }
-                    // ELSE: Volume stays at last value (maintained by main loop variable 'volume')
 
                     // 2. Mode Toggle (Fist Gesture)
                     const middleTip = landmarks[12];

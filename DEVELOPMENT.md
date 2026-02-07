@@ -34,13 +34,18 @@ This document provides detailed information for developers continuing work on th
 
 ### 🚧 Known Issues
 
-#### High Priority
+### ✅ Resolved Issues
 
-1. **Volume Control - Relative Motion** (Issue #1)
-   - **Problem**: When re-pinching, volume jumps to absolute hand position
-   - **Expected**: Volume should adjust relative to locked value
-   - **Location**: `src/main.js` lines 77-85
-   - **Fix Required**: Track initial pinch position and calculate delta
+1. **Volume Control - Relative Motion** (Issue #1) - **FIXED**
+   - **Problem**: When re-pinching, volume jumped to absolute hand position
+   - **Solution**: Implemented delta-based adjustment tracking initial pinch position
+   - **Location**: `src/main.js` lines 31-32 (state), lines 79-98 (logic)
+   - **How it works**: 
+     - First pinch records Y position and current volume
+     - Movement calculates delta from grab point
+     - Volume adjusts relative to locked value
+
+#### High Priority
 
 2. **Hand Zone Enforcement**
    - **Problem**: No visual feedback when hands are in wrong zones

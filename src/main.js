@@ -58,7 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const wristX = 1.0 - wrist.x;
 
                 // Track "hover" for right hand (targeting feedback)
-                if (label === 'Left') { // MediaPipe 'Left' is User 'Right'
+                const isRightHand = (label === 'Left' || label === 'left' || wristX >= 0.35);
+                if (isRightHand) {
                     const index = landmarks[8];
                     const indexX = 1.0 - index.x;
                     const splitPoint = 0.3;

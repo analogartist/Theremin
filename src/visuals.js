@@ -50,25 +50,32 @@ export class Visualizer {
         let leftHandInWrongZone = false;
         let rightHandInWrongZone = false;
 
-        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        if (results.multiHandLandmarks && results.multiHandedness) {
             results.multiHandLandmarks.forEach((landmarks, i) => {
                 const label = results.multiHandedness[i].label; // 'Left' or 'Right'
                 const wrist = landmarks[0];
                 const wristX = 1.0 - wrist.x;
 
-                if (label === 'Right') { // MediaPipe 'Right' is User 'Left'
+                if (label === 'Right' || label === 'right') { // MediaPipe 'Right' is User 'Left'
                     if (wristX < 0.3) {
                         leftHandInLeftZone = true;
                     } else {
                         leftHandInWrongZone = true;
                     }
-                } else if (label === 'Left') { // MediaPipe 'Left' is User 'Right'
+                } else if (label === 'Left' || label === 'left') { // MediaPipe 'Left' is User 'Right'
                     if (wristX >= 0.3) {
                         rightHandInRightZone = true;
                     } else {
                         rightHandInWrongZone = true;
                     }
                 }
+            });
+        } else if (results.multiHandLandmarks) {
+            // Fallback if multiHandedness is missing
+            results.multiHandLandmarks.forEach((landmarks) => {
+                const wristX = 1.0 - landmarks[0].x;
+                if (wristX < 0.3) leftHandInLeftZone = true;
+                else rightHandInRightZone = true;
             });
         }
 
@@ -179,18 +186,19 @@ export class Visualizer {
                 this.ctx.beginPath();
                 this.ctx.moveTo(key.x + key.width - 1, this.height * 0.1);
                 this.ctx.lineTo(key.x + key.width - 1, this.height * 0.9);
-                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; // Increased opacity from 0.1
                 this.ctx.lineWidth = 1;
                 this.ctx.stroke();
             }
 
             // 4. Note Label
-            if (noteNames[index]) {
-                const labelColor = isActive ? '#ffffff' : (isHovered ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)');
+            if (noteNames && noteNames.length > 0) {
+                const name = noteNames[index] || `N${index}`;
+                const labelColor = isActive ? '#ffffff' : (isHovered ? 'rgba(0, 242, 255, 1.0)' : 'rgba(255, 255, 255, 0.6)');
                 this.ctx.fillStyle = labelColor;
-                this.ctx.font = isHovered ? 'bold 12px Outfit' : '10px Outfit';
+                this.ctx.font = isHovered ? 'bold 14px Outfit' : '12px Outfit';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText(noteNames[index], key.x + key.width / 2, this.height - 15);
+                this.ctx.fillText(name, key.x + key.width / 2, this.height - 30);
                 this.ctx.textAlign = 'start'; // reset
             }
         });

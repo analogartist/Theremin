@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Theremin</title>
+    <!-- MediaPipe Hands & Camera Utils -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="src/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        #error-console {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 1rem;
+            z-index: 9999;
+            display: none;
+            font-family: sans-serif;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="error-console"></div>
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            const div = document.getElementById('error-console');
+            div.style.display = 'block';
+            div.innerHTML += `<div>Error: ${msg} <br> at ${url}:${line}:${col}</div>`;
+            return false;
+        };
+        // Also catch unhandled promise rejections
+        window.addEventListener('unhandledrejection', function(event) {
+            const div = document.getElementById('error-console');
+            div.style.display = 'block';
+            div.innerHTML += `<div>Promise Rejection: ${event.reason}</div>`;
+        });
+    </script>
+    <div class="container">
+        <!-- Hidden video element for MediaPipe input -->
+        <video class="input_video" style="display: none;"></video>
+
+        <!-- Main visualizer canvas -->
+        <canvas class="output_canvas"></canvas>
+
+        <div class="overlay">
+            <header>
+                <h1>Virtual Theremin</h1>
+                <p>Wave your hands to create music.</p>
+            </header>
+
+            <div id="loading" class="status-indicator">
+                <div class="spinner"></div>
+                <span>Loading Vision Models...</span>
+            </div>
+
+            <div id="controls" class="controls-panel hidden">
+                <button id="start-btn" class="primary-btn">Start Audio</button>
+                <div class="instructions">
+                    <div class="instruction-item">
+                        <span class="icon">↔️</span>
+                        <span><strong>Right Hand (X):</strong> Pitch</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="icon">↕️</span>
+                        <span><strong>Right Hand (Y):</strong> Volume</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="src/main.js"></script>
+</body>
+
+</html>

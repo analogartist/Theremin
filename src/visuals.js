@@ -4,15 +4,12 @@ export class Visualizer {
         this.ctx = this.canvas.getContext('2d');
         this.width = 0;
         this.height = 0;
+        this.numKeys = 18; // Set this BEFORE resize
+        this.keys = [];
         this.resize();
 
         window.addEventListener('resize', () => this.resize());
         this.particles = [];
-
-        // Define Key Zones (B3 to E5)
-        // 1.5 octaves = 18 chromatic notes
-        this.keys = [];
-        this.numKeys = 18;
     }
 
     resize() {
@@ -184,9 +181,9 @@ export class Visualizer {
             // 3. Vertical Guideline (Divider)
             if (index < this.numKeys - 1) {
                 this.ctx.beginPath();
-                this.ctx.moveTo(key.x + key.width - 1, this.height * 0.1);
-                this.ctx.lineTo(key.x + key.width - 1, this.height * 0.9);
-                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; // Increased opacity from 0.1
+                this.ctx.moveTo(key.x + key.width - 1, 0); // Full height for better visibility
+                this.ctx.lineTo(key.x + key.width - 1, this.height);
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; // Prominent divider
                 this.ctx.lineWidth = 1;
                 this.ctx.stroke();
             }
@@ -194,11 +191,12 @@ export class Visualizer {
             // 4. Note Label
             if (noteNames && noteNames.length > 0) {
                 const name = noteNames[index] || `N${index}`;
-                const labelColor = isActive ? '#ffffff' : (isHovered ? 'rgba(0, 242, 255, 1.0)' : 'rgba(255, 255, 255, 0.6)');
+                // Highlight color for the hovered note name
+                const labelColor = isActive ? '#ffffff' : (isHovered ? '#00f2ff' : 'rgba(255, 255, 255, 0.7)');
                 this.ctx.fillStyle = labelColor;
-                this.ctx.font = isHovered ? 'bold 14px Outfit' : '12px Outfit';
+                this.ctx.font = isHovered ? 'bold 16px Outfit' : '12px Outfit';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText(name, key.x + key.width / 2, this.height - 30);
+                this.ctx.fillText(name, key.x + key.width / 2, this.height - 40); // Move up a bit more
                 this.ctx.textAlign = 'start'; // reset
             }
         });

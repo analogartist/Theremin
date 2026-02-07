@@ -14,12 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const audio = new AudioEngine();
     const visualizer = new Visualizer(canvasElement);
 
-    // B3 to B5 Chromatic Scale (25 notes)
+    // B3 to E5 Chromatic Scale (1.5 octaves = 18 notes)
     // Formula: f = 440 * 2^((n-49)/12) where n is key number
-    // B3 is ~246.94Hz. Let's just generate them.
+    // B3 is ~246.94Hz
     const baseFreq = 246.94;
     const notes = [];
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 18; i++) {
         notes.push(baseFreq * Math.pow(2, i / 12));
     }
 
@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let volume = 0.5; // Default Volume
     let volumeGrabY = null; // Y position when pinch started
     let volumeGrabValue = 0.5; // Volume value when pinch started
+    let audioInitialized = false; // Track if Tone.js is ready
 
     // Callback for when hand tracking results are available
     const onResults = (results) => {
@@ -204,13 +205,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start Audio Button
     startBtn.addEventListener('click', async () => {
-        startBtn.textContent = 'Audio Active';
+        startBtn.textContent = 'Loading Piano...';
         startBtn.disabled = true;
         try {
-            await audio.start();
+            await audio.init();
+            audioInitialized = true;
+            startBtn.textContent = 'Piano Ready ✓';
             startBtn.classList.add('active');
+            console.log("Piano audio engine initialized!");
         } catch (error) {
-            console.error(error);
+            console.error("Failed to initialize audio:", error);
+            startBtn.textContent = 'Audio Error';
         }
     });
 });

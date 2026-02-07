@@ -9,12 +9,10 @@ export class Visualizer {
         window.addEventListener('resize', () => this.resize());
         this.particles = [];
 
-        // Define Key Zones (B3 to B5)
-        // 2 octaves = 24 semitones + 1 = 25 keys?
-        // Or major scale? Chromatic is easiest visually (uniform width).
-        // Let's do 2 octaves chromatic. 24 keys.
+        // Define Key Zones (B3 to E5)
+        // 1.5 octaves = 18 chromatic notes
         this.keys = [];
-        this.numKeys = 24;
+        this.numKeys = 18;
     }
 
     resize() {

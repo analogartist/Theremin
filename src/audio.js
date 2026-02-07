@@ -1,91 +1,106 @@
 export class AudioEngine {
     constructor() {
-        this.audioContext = null;
-        this.masterGain = null;
-        this.activeOscillators = new Map(); // Map note frequency to oscillator node
-        this.isPlaying = false;
-
-        // B3 to B5 frequencies (approximate)
-        // We can generate them or hardcode. 
-        // B3 = 246.94
-        // C4 = 261.63 ... 
-        // B5 = 987.77
-        // Let's generate a chromatic scale from B3
+        this.sampler = null;
+        this.volume = null;
+        this.activeNotes = new Map(); // Map note name → true
+        this.isInitialized = false;
     }
 
-    init() {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        this.audioContext = new AudioContext();
+    async init() {
+        // Start Tone.js audio context
+        await Tone.start();
 
-        this.masterGain = this.audioContext.createGain();
-        this.masterGain.gain.value = 0.5; // Default volume
-        this.masterGain.connect(this.audioContext.destination);
-    }
+        // Create Sampler with Salamander Grand Piano samples
+        this.sampler = new Tone.Sampler({
+            urls: {
+                A0: "A0.mp3",
+                C1: "C1.mp3",
+                "D#1": "Ds1.mp3",
+                "F#1": "Fs1.mp3",
+                A1: "A1.mp3",
+                C2: "C2.mp3",
+                "D#2": "Ds2.mp3",
+                "F#2": "Fs2.mp3",
+                A2: "A2.mp3",
+                C3: "C3.mp3",
+                "D#3": "Ds3.mp3",
+                "F#3": "Fs3.mp3",
+                A3: "A3.mp3",
+                C4: "C4.mp3",
+                "D#4": "Ds4.mp3",
+                "F#4": "Fs4.mp3",
+                A4: "A4.mp3",
+                C5: "C5.mp3",
+                "D#5": "Ds5.mp3",
+                "F#5": "Fs5.mp3",
+                A5: "A5.mp3",
+                C6: "C6.mp3",
+                "D#6": "Ds6.mp3",
+                "F#6": "Fs6.mp3",
+                A6: "A6.mp3",
+                C7: "C7.mp3",
+                "D#7": "Ds7.mp3",
+                "F#7": "Fs7.mp3",
+                A7: "A7.mp3",
+                C8: "C8.mp3"
+            },
+            release: 1,
+            baseUrl: "https://tonejs.github.io/audio/salamander/"
+        });
 
-    async start() {
-        if (!this.audioContext) this.init();
-        if (this.audioContext.state === 'suspended') {
-            await this.audioContext.resume();
-        }
-        this.isPlaying = true;
-    }
+        // Create volume control
+        this.volume = new Tone.Volume(0);
 
-    setVolume(vol) {
-        if (this.masterGain) {
-            // Smooth transition
-            this.masterGain.gain.setTargetAtTime(vol, this.audioContext.currentTime, 0.1);
-        }
+        // Connect sampler → volume → destination
+        this.sampler.connect(this.volume);
+        this.volume.toDestination();
+
+        // Wait for samples to load
+        await Tone.loaded();
+
+        this.isInitialized = true;
+        console.log("Piano samples loaded successfully!");
     }
 
     playNote(frequency) {
-        if (!this.audioContext || !this.isPlaying) return;
+        if (!this.isInitialized) return;
 
-        // If note is already playing, do nothing (or retrigger?)
-        if (this.activeOscillators.has(frequency)) return;
+        // Convert frequency to note name (e.g., 440 → "A4")
+        const note = Tone.Frequency(frequency, "hz").toNote();
 
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-
-        osc.type = 'triangle'; // Piano-ish? Sine is too pure. Triangle/Sawtooth + filter is better.
-        osc.frequency.value = frequency;
-
-        // ADSR Envelope
-        const now = this.audioContext.currentTime;
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.3, now + 0.05); // Attack
-        gain.gain.exponentialRampToValueAtTime(0.2, now + 0.3); // Decay
-
-        osc.connect(gain);
-        gain.connect(this.masterGain);
-
-        osc.start(now);
-
-        this.activeOscillators.set(frequency, { osc, gain });
+        if (!this.activeNotes.has(note)) {
+            this.sampler.triggerAttack(note);
+            this.activeNotes.set(note, true);
+        }
     }
 
     stopNote(frequency) {
-        if (!this.activeOscillators.has(frequency)) return;
+        if (!this.isInitialized) return;
 
-        const { osc, gain } = this.activeOscillators.get(frequency);
-        const now = this.audioContext.currentTime;
+        const note = Tone.Frequency(frequency, "hz").toNote();
 
-        // Release
-        gain.gain.cancelScheduledValues(now);
-        gain.gain.setValueAtTime(gain.gain.value, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        if (this.activeNotes.has(note)) {
+            this.sampler.triggerRelease(note);
+            this.activeNotes.delete(note);
+        }
+    }
 
-        osc.stop(now + 0.2);
+    setVolume(vol) {
+        if (!this.isInitialized) return;
 
-        this.activeOscillators.delete(frequency);
+        // Convert 0-1 range to decibels (-60 to 0)
+        // vol = 0 → -60dB (silent)
+        // vol = 1 → 0dB (full volume)
+        const db = vol === 0 ? -60 : Tone.gainToDb(vol);
+        this.volume.volume.value = db;
     }
 
     stopAll() {
-        this.activeOscillators.forEach(({ osc, gain }) => {
-            const now = this.audioContext.currentTime;
-            gain.gain.cancelScheduledValues(now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-            osc.stop(now + 0.1);
+        if (!this.isInitialized) return;
+
+        this.activeNotes.forEach((_, note) => {
+            this.sampler.triggerRelease(note);
         });
-        this.activeOscillators.clear();
+        this.activeNotes.clear();
     }
 }

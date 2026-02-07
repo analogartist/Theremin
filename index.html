@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Virtual Theremin</title>
+    <!-- Tone.js for realistic piano sound -->
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
     <!-- MediaPipe Hands & Camera Utils -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
@@ -36,14 +38,14 @@
 <body>
     <div id="error-console"></div>
     <script>
-        window.onerror = function(msg, url, line, col, error) {
+        window.onerror = function (msg, url, line, col, error) {
             const div = document.getElementById('error-console');
             div.style.display = 'block';
             div.innerHTML += `<div>Error: ${msg} <br> at ${url}:${line}:${col}</div>`;
             return false;
         };
         // Also catch unhandled promise rejections
-        window.addEventListener('unhandledrejection', function(event) {
+        window.addEventListener('unhandledrejection', function (event) {
             const div = document.getElementById('error-console');
             div.style.display = 'block';
             div.innerHTML += `<div>Promise Rejection: ${event.reason}</div>`;

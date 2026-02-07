@@ -19,8 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // B3 is ~246.94Hz
     const baseFreq = 246.94;
     const notes = [];
-    const noteNames = ["B3", "C4", "C#4", "D4", "D#4", "E4", "F4", "F#4", "G4", "G#4", "A4", "A#4", "B4", "C5", "C#5", "D5", "D#5", "E5"];
-    for (let i = 0; i < 18; i++) {
+    const noteNames = ["B3", "C4", "C#4", "D4", "D#4", "E4", "F4", "F#4", "G4", "G#4", "A4", "A#4", "B4", "C5"];
+    for (let i = 0; i < 14; i++) {
         notes.push(baseFreq * Math.pow(2, i / 12));
     }
 
@@ -65,7 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     const splitPoint = 0.3;
                     if (indexX > splitPoint) {
                         const normX = (indexX - splitPoint) / (1 - splitPoint);
-                        hoveredNoteIndex = Math.floor(normX * 18);
+                        // Add 5% horizontal padding for better edge reliability
+                        const padding = 0.05;
+                        const normXAdjusted = (normX - padding) / (1 - 2 * padding);
+                        hoveredNoteIndex = Math.floor(normXAdjusted * 14);
+                        if (hoveredNoteIndex < 0) hoveredNoteIndex = null;
+                        if (hoveredNoteIndex >= 14) hoveredNoteIndex = null;
                     }
                 }
 
@@ -158,8 +163,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (tipX > splitPoint) {
                                 // Map tip.x from [0.3, 1.0] to [0, 1]
                                 const normX = (tipX - splitPoint) / (1 - splitPoint);
-                                const noteIndex = Math.floor(normX * 18);
-                                if (noteIndex >= 0 && noteIndex < 18) currentActiveNotes.add(noteIndex);
+                                // Add 5% horizontal padding
+                                const padding = 0.05;
+                                const normXAdjusted = (normX - padding) / (1 - 2 * padding);
+                                const noteIndex = Math.floor(normXAdjusted * 14);
+                                if (noteIndex >= 0 && noteIndex < 14) currentActiveNotes.add(noteIndex);
                             }
                         });
                     } else {
@@ -175,7 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (indexX > splitPoint) {
                                 // Base note from X position
                                 const normX = (indexX - splitPoint) / (1 - splitPoint);
-                                const baseNoteIndex = Math.floor(normX * 18);
+                                // Add 5% horizontal padding
+                                const padding = 0.05;
+                                const normXAdjusted = (normX - padding) / (1 - 2 * padding);
+                                const baseNoteIndex = Math.floor(normXAdjusted * 14);
 
                                 // Pitch bend from Z position (depth)
                                 const zNeutral = -0.1; // Calibrated neutral position
@@ -187,9 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                 // Final note with pitch bend
                                 const pitchBendedIndex = baseNoteIndex + clampedOffset;
-                                const finalIndex = Math.max(0, Math.min(17, pitchBendedIndex));
+                                const finalIndex = Math.max(0, Math.min(13, pitchBendedIndex));
 
-                                if (finalIndex >= 0 && finalIndex < 18) {
+                                if (finalIndex >= 0 && finalIndex < 14 && baseNoteIndex >= 0 && baseNoteIndex < 14) {
                                     currentActiveNotes.add(finalIndex);
                                 }
                             }

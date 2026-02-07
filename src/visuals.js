@@ -4,8 +4,8 @@ export class Visualizer {
         this.ctx = this.canvas.getContext('2d');
         this.width = 0;
         this.height = 0;
-        this.numKeys = 18; // Set this BEFORE resize
         this.keys = [];
+        this.numKeys = 14;
         this.resize();
 
         window.addEventListener('resize', () => this.resize());
@@ -20,14 +20,22 @@ export class Visualizer {
 
         // Recalculate key positions
         // Right 70% of screen starts at 0.3 * width
-        const keyAreaStart = this.width * 0.30;
-        const keyAreaWidth = this.width * 0.70;
-        const keyWidth = keyAreaWidth / this.numKeys;
+        const splitPointRatio = 0.30;
+        const paddingRatio = 0.05; // 5% horizontal padding on each side of the piano zone
+
+        const keyAreaStartFull = this.width * splitPointRatio;
+        const keyAreaWidthFull = this.width * (1 - splitPointRatio);
+
+        // Calculate insets
+        const insetX = keyAreaWidthFull * paddingRatio;
+        const keyAreaStartPadded = keyAreaStartFull + insetX;
+        const keyAreaWidthPadded = keyAreaWidthFull - (2 * insetX);
+        const keyWidth = keyAreaWidthPadded / this.numKeys;
 
         this.keys = [];
         for (let i = 0; i < this.numKeys; i++) {
             this.keys.push({
-                x: keyAreaStart + (i * keyWidth),
+                x: keyAreaStartPadded + (i * keyWidth),
                 width: keyWidth,
                 noteIndex: i,
                 active: false

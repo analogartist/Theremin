@@ -38,7 +38,7 @@ export class Visualizer {
         }
     }
 
-    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5, pitchBendOffset = 0) {
+    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5, pitchBendOffset = 0, hoveredNoteIndex = null, noteNames = []) {
         // Clear
         this.ctx.fillStyle = 'rgba(15, 15, 19, 0.2)';
         this.ctx.fillRect(0, 0, this.width, this.height);
@@ -153,8 +153,16 @@ export class Visualizer {
         // Draw Keys
         this.keys.forEach((key, index) => {
             const isActive = activeNotes.includes(index);
+            const isHovered = (hoveredNoteIndex === index);
 
-            this.ctx.fillStyle = isActive ? 'rgba(0, 242, 255, 0.4)' : 'rgba(255, 255, 255, 0.05)';
+            // 1. Hover Highlight (Subtle)
+            if (isHovered && !isActive) {
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+                this.ctx.fillRect(key.x, 0, key.width - 2, this.height);
+            }
+
+            // 2. Background / Active Key
+            this.ctx.fillStyle = isActive ? (isChordsMode ? 'rgba(255, 0, 85, 0.4)' : 'rgba(0, 242, 255, 0.4)') : 'rgba(255, 255, 255, 0.05)';
             this.ctx.fillRect(key.x, 0, key.width - 2, this.height); // -2 for gap
 
             if (isActive) {
@@ -162,9 +170,28 @@ export class Visualizer {
                 const glowColor = isChordsMode ? '#ff0055' : '#00f2ff';
                 this.ctx.shadowBlur = 30;
                 this.ctx.shadowColor = glowColor;
-                this.ctx.fillStyle = isActive ? (isChordsMode ? 'rgba(255, 0, 85, 0.4)' : 'rgba(0, 242, 255, 0.4)') : 'rgba(255, 255, 255, 0.05)';
                 this.ctx.fillRect(key.x, 0, key.width - 2, this.height);
                 this.ctx.shadowBlur = 0;
+            }
+
+            // 3. Vertical Guideline (Divider)
+            if (index < this.numKeys - 1) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(key.x + key.width - 1, this.height * 0.1);
+                this.ctx.lineTo(key.x + key.width - 1, this.height * 0.9);
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                this.ctx.lineWidth = 1;
+                this.ctx.stroke();
+            }
+
+            // 4. Note Label
+            if (noteNames[index]) {
+                const labelColor = isActive ? '#ffffff' : (isHovered ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)');
+                this.ctx.fillStyle = labelColor;
+                this.ctx.font = isHovered ? 'bold 12px Outfit' : '10px Outfit';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(noteNames[index], key.x + key.width / 2, this.height - 15);
+                this.ctx.textAlign = 'start'; // reset
             }
         });
 

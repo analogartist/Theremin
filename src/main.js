@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // B3 is ~246.94Hz
     const baseFreq = 246.94;
     const notes = [];
+    const noteNames = ["B3", "C4", "C#4", "D4", "D#4", "E4", "F4", "F#4", "G4", "G#4", "A4", "A#4", "B4", "C5", "C#5", "D5", "D#5", "E5"];
     for (let i = 0; i < 18; i++) {
         notes.push(baseFreq * Math.pow(2, i / 12));
     }
@@ -33,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let volumeGrabValue = 0.5; // Volume value when pinch started
     let audioInitialized = false; // Track if Tone.js is ready
     let pitchBendOffset = 0; // Current pitch bend in semitones (-5 to +5)
+    let hoveredNoteIndex = null; // Index of note hand is over (for guidance)
 
     // Callback for when hand tracking results are available
     const onResults = (results) => {
@@ -47,17 +49,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Process Hands
         const currentActiveNotes = new Set();
-        // volume variable is now persistent in outer scope
+        hoveredNoteIndex = null; // Reset for this frame
 
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-
-            // Separate hands by screen side
-            // Screen Left (x < 0.35): Volume / Control
-            // Screen Right (x > 0.35): Notes
-            // Adjusted split point slightly to give more space/margin
-
-            results.multiHandLandmarks.forEach((landmarks) => {
+            results.multiHandLandmarks.forEach((landmarks, i) => {
+                const label = results.multiHandedness[i].label; // 'Left' or 'Right'
                 const wrist = landmarks[0];
+                const wristX = 1.0 - wrist.x;
+
+                // Track "hover" for right hand (targeting feedback)
+                if (label === 'Left') { // MediaPipe 'Left' is User 'Right'
+                    const index = landmarks[8];
+                    const indexX = 1.0 - index.x;
+                    const splitPoint = 0.3;
+                    if (indexX > splitPoint) {
+                        const normX = (indexX - splitPoint) / (1 - splitPoint);
+                        hoveredNoteIndex = Math.floor(normX * 18);
+                    }
+                }
+
+                const wrist_mirrored = wrist; // just use wrist reference
 
                 // MIRRORING LOGIC:
                 // MediaPipe: x=0 is Camera-Left (User-Right).
@@ -204,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
         audio.setVolume(volume);
 
         // Update Visualizer with extra state
-        visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, pitchBendOffset);
+        visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, pitchBendOffset, hoveredNoteIndex, noteNames);
     };
 
     const tracker = new HandTracker(videoElement, onResults);

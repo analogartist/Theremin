@@ -43,13 +43,67 @@ export class Visualizer {
         this.ctx.fillStyle = 'rgba(15, 15, 19, 0.2)';
         this.ctx.fillRect(0, 0, this.width, this.height);
 
-        // Draw Split Line
+        // Draw Zone Backgrounds (Subtle highlights when hand is present)
+        const splitX = this.width * 0.30;
+        let leftHandInLeftZone = false;
+        let rightHandInRightZone = false;
+        let leftHandInWrongZone = false;
+        let rightHandInWrongZone = false;
+
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            results.multiHandLandmarks.forEach((landmarks, i) => {
+                const label = results.multiHandedness[i].label; // 'Left' or 'Right'
+                const wrist = landmarks[0];
+                const wristX = 1.0 - wrist.x;
+
+                if (label === 'Right') { // MediaPipe 'Right' is User 'Left'
+                    if (wristX < 0.3) {
+                        leftHandInLeftZone = true;
+                    } else {
+                        leftHandInWrongZone = true;
+                    }
+                } else if (label === 'Left') { // MediaPipe 'Left' is User 'Right'
+                    if (wristX >= 0.3) {
+                        rightHandInRightZone = true;
+                    } else {
+                        rightHandInWrongZone = true;
+                    }
+                }
+            });
+        }
+
+        // Draw Left Zone BG
+        this.ctx.fillStyle = leftHandInWrongZone ? 'rgba(255, 0, 0, 0.1)' : (leftHandInLeftZone ? 'rgba(255, 0, 85, 0.05)' : 'rgba(255, 255, 255, 0.02)');
+        this.ctx.fillRect(0, 0, splitX, this.height);
+
+        // Draw Right Zone BG
+        this.ctx.fillStyle = rightHandInWrongZone ? 'rgba(255, 0, 0, 0.1)' : (rightHandInRightZone ? 'rgba(0, 242, 255, 0.05)' : 'rgba(255, 255, 255, 0.02)');
+        this.ctx.fillRect(splitX, 0, this.width - splitX, this.height);
+
+        // Draw Split Line (Enhanced)
+        const gradient = this.ctx.createLinearGradient(splitX, 0, splitX, this.height);
+        gradient.addColorStop(0, 'transparent');
+        gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.8)');
+        gradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(1, 'transparent');
+
         this.ctx.beginPath();
-        this.ctx.moveTo(this.width * 0.30, 0);
-        this.ctx.lineTo(this.width * 0.30, this.height);
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        this.ctx.lineWidth = 2;
+        this.ctx.moveTo(splitX, 0);
+        this.ctx.lineTo(splitX, this.height);
+        this.ctx.strokeStyle = gradient;
+        this.ctx.lineWidth = 4;
+        this.ctx.setLineDash([5, 15]); // Dotted line for split
         this.ctx.stroke();
+        this.ctx.setLineDash([]); // Reset dash
+
+        // Draw Warning if hand in wrong zone
+        if (leftHandInWrongZone || rightHandInWrongZone) {
+            this.ctx.font = 'bold 16px Outfit';
+            this.ctx.fillStyle = '#ff4444';
+            if (leftHandInWrongZone) this.ctx.fillText("⚠️ LEFT HAND TOO FAR RIGHT", 20, this.height - 20);
+            if (rightHandInWrongZone) this.ctx.fillText("⚠️ RIGHT HAND TOO FAR LEFT", splitX + 20, this.height - 20);
+        }
 
         // Draw Labels & Mode
         this.ctx.font = '20px Outfit';
@@ -104,10 +158,11 @@ export class Visualizer {
             this.ctx.fillRect(key.x, 0, key.width - 2, this.height); // -2 for gap
 
             if (isActive) {
-                // Glow effect
-                this.ctx.shadowBlur = 20;
-                this.ctx.shadowColor = '#00f2ff';
-                this.ctx.fillStyle = 'rgba(0, 242, 255, 0.8)';
+                // Glow effect (Mode-Specific)
+                const glowColor = isChordsMode ? '#ff0055' : '#00f2ff';
+                this.ctx.shadowBlur = 30;
+                this.ctx.shadowColor = glowColor;
+                this.ctx.fillStyle = isActive ? (isChordsMode ? 'rgba(255, 0, 85, 0.4)' : 'rgba(0, 242, 255, 0.4)') : 'rgba(255, 255, 255, 0.05)';
                 this.ctx.fillRect(key.x, 0, key.width - 2, this.height);
                 this.ctx.shadowBlur = 0;
             }
@@ -126,7 +181,8 @@ export class Visualizer {
                 const y = indexTip.y * this.height;
 
                 this.drawSkeleton(landmarks);
-                this.addParticles(x, y);
+                const particleColor = isChordsMode ? '#ff0055' : '#00f2ff';
+                this.addParticles(x, y, particleColor);
 
                 // Highlight all fingertips for Right Hand logic
                 // Thumb(4), Index(8), Middle(12), Ring(16), Pinky(20)

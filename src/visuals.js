@@ -43,7 +43,7 @@ export class Visualizer {
         }
     }
 
-    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5, pitchBendOffset = 0, hoveredNoteIndex = null, noteNames = []) {
+    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5, pitchBendOffset = 0, hoveredNoteIndex = null, noteNames = [], isPitchBendEnabled = true) {
         // Clear
         this.ctx.fillStyle = 'rgba(15, 15, 19, 0.2)';
         this.ctx.fillRect(0, 0, this.width, this.height);
@@ -155,11 +155,19 @@ export class Visualizer {
         this.ctx.fillText("PIANO KEYS", this.width * 0.4, 50);
 
         // Pitch Bend Indicator (Melody Mode only)
-        if (!isChordsMode && pitchBendOffset !== 0) {
-            const bendText = pitchBendOffset > 0 ? `+${pitchBendOffset}` : `${pitchBendOffset}`;
-            this.ctx.font = 'bold 24px Outfit';
-            this.ctx.fillStyle = '#00f2ff';
-            this.ctx.fillText(`BEND: ${bendText}`, this.width * 0.65, 50);
+        if (!isChordsMode) {
+            this.ctx.font = 'bold 20px Outfit';
+            this.ctx.fillStyle = isPitchBendEnabled ? '#00f2ff' : 'rgba(255,255,255,0.3)';
+            this.ctx.fillText(isPitchBendEnabled ? "BEND: READY" : "BEND: LOCKED", this.width * 0.65, 80);
+            this.ctx.font = '12px Outfit';
+            this.ctx.fillText("✌️ Left Peace Sign to Toggle", this.width * 0.65, 100);
+
+            if (isPitchBendEnabled && pitchBendOffset !== 0) {
+                const bendText = pitchBendOffset > 0 ? `+${pitchBendOffset}` : `${pitchBendOffset}`;
+                this.ctx.font = 'bold 32px Outfit';
+                this.ctx.fillStyle = '#00f2ff';
+                this.ctx.fillText(`BEND: ${bendText}`, this.width * 0.65, 50);
+            }
         }
 
         // Draw Keys

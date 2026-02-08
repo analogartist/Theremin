@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let audioInitialized = false; // Track if Tone.js is ready
     let pitchBendOffset = 0; // Current pitch bend in semitones (-5 to +5)
     let hoveredNoteIndex = null; // Index of note hand is over (for guidance)
+    let isPitchBendEnabled = true; // Toggle for depth-based bending
+    let bendToggleCooldown = 0; // Debounce for the V-sign toggle
 
     // Callback for when hand tracking results are available
     const onResults = (results) => {
@@ -44,8 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
             controlsPanel.classList.remove('hidden');
         }
 
-        // Update Cooldown
+        // Update Cooldowns
         if (modeToggleCooldown > 0) modeToggleCooldown--;
+        if (bendToggleCooldown > 0) bendToggleCooldown--;
 
         // Process Hands
         const currentActiveNotes = new Set();
@@ -147,6 +150,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.log("Mode Toggled:", isChordsMode ? "CHORDS" : "MELODY");
                     }
 
+                    // 3. Pitch Bend Toggle (V-Sign / Peace Sign Gesture)
+                    // Logic: Index and Middle extended, Ring and Pinky curled.
+                    const isVsign = (indexTip.y < indexPip.y) &&
+                        (middleTip.y < middlePip.y) &&
+                        (ringTip.y > ringPip.y) &&
+                        (pinkyTip.y > pinkyPip.y);
+
+                    if (isVsign && bendToggleCooldown === 0) {
+                        isPitchBendEnabled = !isPitchBendEnabled;
+                        bendToggleCooldown = 60;
+                        console.log("Pitch Bend:", isPitchBendEnabled ? "ENABLED" : "LOCKED");
+                    }
+
                 } else {
                     // --- RIGHT ZONE: NOTES (30% - 100%) ---
                     // Logic depends on Mode
@@ -196,8 +212,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const semitoneOffset = (zOffset / zRange) * -5; // Closer = higher pitch
                                     const clampedOffset = Math.max(-5, Math.min(5, semitoneOffset));
 
-                                    pitchBendOffset = Math.round(clampedOffset); // For display
-                                    audio.setDetune(clampedOffset * 100); // Continuous pitch bend (100 cents per semitone)
+                                    if (isPitchBendEnabled) {
+                                        pitchBendOffset = Math.round(clampedOffset);
+                                        audio.setDetune(clampedOffset * 100);
+                                    } else {
+                                        pitchBendOffset = 0;
+                                        audio.setDetune(0);
+                                    }
 
                                     currentActiveNotes.add(baseNoteIndex);
                                 }
@@ -230,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Update Visualizer with extra state
-        visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, pitchBendOffset, hoveredNoteIndex, noteNames);
+        visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, pitchBendOffset, hoveredNoteIndex, noteNames, isPitchBendEnabled);
     };
 
     const tracker = new HandTracker(videoElement, onResults);

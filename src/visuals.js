@@ -43,7 +43,7 @@ export class Visualizer {
         }
     }
 
-    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5, pitchBendOffset = 0, hoveredNoteIndex = null, noteNames = [], isPitchBendEnabled = true) {
+    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5, pitchBendOffset = 0, hoveredNoteIndex = null, noteNames = [], isPitchBendEnabled = true, showUI = true) {
         // Clear
         this.ctx.fillStyle = 'rgba(15, 15, 19, 0.2)';
         this.ctx.fillRect(0, 0, this.width, this.height);
@@ -204,7 +204,7 @@ export class Visualizer {
             }
 
             // 3. Vertical Guideline (Divider)
-            if (index < this.numKeys - 1) {
+            if (showUI && index < this.numKeys - 1) {
                 this.ctx.beginPath();
                 this.ctx.moveTo(key.x + key.width - 1, 0); // Full height for better visibility
                 this.ctx.lineTo(key.x + key.width - 1, this.height);
@@ -214,7 +214,7 @@ export class Visualizer {
             }
 
             // 4. Note Label
-            if (noteNames && noteNames.length > 0) {
+            if (showUI && noteNames && noteNames.length > 0) {
                 const name = noteNames[index] || `N${index}`;
                 // Highlight color for the hovered note name
                 const labelColor = isActive ? '#ffffff' : (isHovered ? '#00f2ff' : 'rgba(255, 255, 255, 0.7)');

@@ -39,6 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let hoveredNoteIndex = null; // Index of note hand is over (for guidance)
     let isPitchBendEnabled = true; // Toggle for depth-based bending
     let bendToggleCooldown = 0; // Debounce for the V-sign toggle
+    let showUI = true; // Toggle for key lines and labels
+    let uiToggleCooldown = 0; // Debounce for the UI toggle
 
     // Callback for when hand tracking results are available
     const onResults = (results) => {
@@ -83,6 +85,21 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (hoveredNoteIndex < 0) hoveredNoteIndex = null;
                                 if (hoveredNoteIndex >= 9) hoveredNoteIndex = null;
                             }
+                        }
+
+                        // Right-Hand UI Toggle (Fist Gesture)
+                        const rTipIds = [8, 12, 16, 20];
+                        const rPipIds = [6, 10, 14, 18];
+                        let rCurledCount = 0;
+                        rTipIds.forEach((id, idx) => {
+                            if (landmarks[id] && landmarks[pipIds[idx]] && landmarks[id].y > landmarks[pipIds[idx]].y) rCurledCount++;
+                        });
+
+                        const isRightFist = rCurledCount >= 3;
+                        if (isRightFist && uiToggleCooldown === 0) {
+                            showUI = !showUI;
+                            uiToggleCooldown = 60;
+                            console.log("UI Visibility:", showUI ? "VISIBLE" : "HIDDEN");
                         }
                     }
 
@@ -215,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Update Visualizer
-            visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, pitchBendOffset, hoveredNoteIndex, noteNames, isPitchBendEnabled);
+            visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, pitchBendOffset, hoveredNoteIndex, noteNames, isPitchBendEnabled, showUI);
         } catch (e) {
             console.error("CRITICAL ERROR in onResults:", e);
             throw e; // Rethrow to trigger unhandledrejection catcher with stack

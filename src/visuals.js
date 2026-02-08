@@ -93,21 +93,23 @@ export class Visualizer {
         this.ctx.fillRect(splitX, 0, this.width - splitX, this.height);
 
         // Draw Split Line (Enhanced)
-        const gradient = this.ctx.createLinearGradient(splitX, 0, splitX, this.height);
-        gradient.addColorStop(0, 'transparent');
-        gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.2)');
-        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.8)');
-        gradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.2)');
-        gradient.addColorStop(1, 'transparent');
+        if (showUI) {
+            const gradient = this.ctx.createLinearGradient(splitX, 0, splitX, this.height);
+            gradient.addColorStop(0, 'transparent');
+            gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.2)');
+            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.2)');
+            gradient.addColorStop(1, 'transparent');
 
-        this.ctx.beginPath();
-        this.ctx.moveTo(splitX, 0);
-        this.ctx.lineTo(splitX, this.height);
-        this.ctx.strokeStyle = gradient;
-        this.ctx.lineWidth = 4;
-        this.ctx.setLineDash([5, 15]); // Dotted line for split
-        this.ctx.stroke();
-        this.ctx.setLineDash([]); // Reset dash
+            this.ctx.beginPath();
+            this.ctx.moveTo(splitX, 0);
+            this.ctx.lineTo(splitX, this.height);
+            this.ctx.strokeStyle = gradient;
+            this.ctx.lineWidth = 4;
+            this.ctx.setLineDash([5, 15]); // Dotted line for split
+            this.ctx.stroke();
+            this.ctx.setLineDash([]); // Reset dash
+        }
 
         // Draw Warning if hand in wrong zone
         if (leftHandInWrongZone || rightHandInWrongZone) {
@@ -118,9 +120,11 @@ export class Visualizer {
         }
 
         // Draw Labels & Mode
-        this.ctx.font = '20px Outfit';
-        this.ctx.fillStyle = 'rgba(255, 0, 85, 0.5)';
-        this.ctx.fillText("VOLUME / MODE", this.width * 0.05, 50);
+        if (showUI) {
+            this.ctx.font = '20px Outfit';
+            this.ctx.fillStyle = 'rgba(255, 0, 85, 0.5)';
+            this.ctx.fillText("VOLUME / MODE", this.width * 0.05, 50);
+        }
 
         // Draw Volume Bar
         const volBarHeight = 200;
@@ -151,8 +155,10 @@ export class Visualizer {
         this.ctx.fillText(isChordsMode ? "(Fist to Toggle)" : "(Fist to Toggle)", this.width * 0.05, 130);
         this.ctx.fillText(isChordsMode ? "All Fingers Play" : "Pinch to Play", this.width * 0.05, 150);
 
-        this.ctx.fillStyle = 'rgba(0, 242, 255, 0.5)';
-        this.ctx.fillText("PIANO KEYS", this.width * 0.4, 50);
+        if (showUI) {
+            this.ctx.fillStyle = 'rgba(0, 242, 255, 0.5)';
+            this.ctx.fillText("PIANO KEYS", this.width * 0.4, 50);
+        }
 
         // Pitch Bend Indicator (Melody Mode only)
         if (!isChordsMode) {
@@ -161,9 +167,11 @@ export class Visualizer {
             const statusLabel = isPitchBendEnabled ? "BEND: READY ✌️" : "BEND: LOCKED 🔒";
             this.ctx.fillText(statusLabel, this.width * 0.65, 80);
 
-            this.ctx.font = '12px Outfit';
-            this.ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            this.ctx.fillText("Left Hand Peace Sign to Toggle", this.width * 0.65, 105);
+            if (showUI) {
+                this.ctx.font = '12px Outfit';
+                this.ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                this.ctx.fillText("Left Hand Peace Sign to Toggle", this.width * 0.65, 105);
+            }
 
             if (isPitchBendEnabled && pitchBendOffset !== 0) {
                 const bendText = pitchBendOffset > 0 ? `+${pitchBendOffset}` : `${pitchBendOffset}`;
@@ -191,16 +199,19 @@ export class Visualizer {
             }
 
             // 2. Background / Active Key
-            this.ctx.fillStyle = isActive ? (isChordsMode ? 'rgba(255, 0, 85, 0.4)' : 'rgba(0, 242, 255, 0.4)') : 'rgba(255, 255, 255, 0.05)';
-            this.ctx.fillRect(key.x, 0, key.width - 2, this.height); // -2 for gap
-
             if (isActive) {
+                this.ctx.fillStyle = isChordsMode ? 'rgba(255, 0, 85, 0.4)' : 'rgba(0, 242, 255, 0.4)';
+                this.ctx.fillRect(key.x, 0, key.width - 2, this.height); // -2 for gap
+
                 // Glow effect (Mode-Specific)
                 const glowColor = isChordsMode ? '#ff0055' : '#00f2ff';
                 this.ctx.shadowBlur = 30;
                 this.ctx.shadowColor = glowColor;
                 this.ctx.fillRect(key.x, 0, key.width - 2, this.height);
                 this.ctx.shadowBlur = 0;
+            } else if (showUI) {
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                this.ctx.fillRect(key.x, 0, key.width - 2, this.height);
             }
 
             // 3. Vertical Guideline (Divider)

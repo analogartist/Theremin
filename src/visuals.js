@@ -5,7 +5,7 @@ export class Visualizer {
         this.width = 0;
         this.height = 0;
         this.keys = [];
-        this.numKeys = 14;
+        this.numKeys = 9;
         this.resize();
 
         window.addEventListener('resize', () => this.resize());

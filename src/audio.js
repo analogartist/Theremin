@@ -94,6 +94,7 @@ export class AudioEngine {
             this.volumeNode.volume.value = db;
         } catch (e) {
             console.error("AudioEngine: Error setting volume", e);
+            throw e; // Propagate for stack trace
         }
     }
 
@@ -105,6 +106,7 @@ export class AudioEngine {
             this.sampler.detune.value = cents;
         } catch (e) {
             console.error("AudioEngine: Error setting detune", e);
+            throw e; // Propagate for stack trace
         }
     }
 

@@ -41,14 +41,17 @@
         window.onerror = function (msg, url, line, col, error) {
             const div = document.getElementById('error-console');
             div.style.display = 'block';
-            div.innerHTML += `<div>Error: ${msg} <br> at ${url}:${line}:${col}</div>`;
+            const stack = error && error.stack ? `<pre style="font-size: 10px; overflow: auto;">${error.stack}</pre>` : '';
+            div.innerHTML += `<div>Error: ${msg} <br> at ${url}:${line}:${col} ${stack}</div>`;
             return false;
         };
         // Also catch unhandled promise rejections
         window.addEventListener('unhandledrejection', function (event) {
             const div = document.getElementById('error-console');
             div.style.display = 'block';
-            div.innerHTML += `<div>Promise Rejection: ${event.reason}</div>`;
+            const reason = event.reason;
+            const stack = reason && reason.stack ? `<pre style="font-size: 10px; overflow: auto;">${reason.stack}</pre>` : '';
+            div.innerHTML += `<div>Promise Rejection: ${reason} ${stack}</div>`;
         });
     </script>
     <div class="container">

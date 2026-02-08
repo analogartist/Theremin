@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update Cooldowns
             if (modeToggleCooldown > 0) modeToggleCooldown--;
             if (bendToggleCooldown > 0) bendToggleCooldown--;
+            if (uiToggleCooldown > 0) uiToggleCooldown--;
 
             // Process Hands
             const currentActiveNotes = new Set();
@@ -92,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const rPipIds = [6, 10, 14, 18];
                         let rCurledCount = 0;
                         rTipIds.forEach((id, idx) => {
-                            if (landmarks[id] && landmarks[pipIds[idx]] && landmarks[id].y > landmarks[pipIds[idx]].y) rCurledCount++;
+                            if (landmarks[id] && landmarks[rPipIds[idx]] && landmarks[id].y > landmarks[rPipIds[idx]].y) rCurledCount++;
                         });
 
                         const isRightFist = rCurledCount >= 3;

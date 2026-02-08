@@ -65,8 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const splitPoint = 0.3;
                     if (indexX > splitPoint) {
                         const normX = (indexX - splitPoint) / (1 - splitPoint);
-                        // Add 5% horizontal padding for better edge reliability
-                        const padding = 0.05;
+                        // Increase horizontal padding to 10% for better edge reliability
+                        const padding = 0.10;
                         const normXAdjusted = (normX - padding) / (1 - 2 * padding);
                         hoveredNoteIndex = Math.floor(normXAdjusted * 14);
                         if (hoveredNoteIndex < 0) hoveredNoteIndex = null;
@@ -163,8 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (tipX > splitPoint) {
                                 // Map tip.x from [0.3, 1.0] to [0, 1]
                                 const normX = (tipX - splitPoint) / (1 - splitPoint);
-                                // Add 5% horizontal padding
-                                const padding = 0.05;
+                                // Increase horizontal padding to 10%
+                                const padding = 0.10;
                                 const normXAdjusted = (normX - padding) / (1 - 2 * padding);
                                 const noteIndex = Math.floor(normXAdjusted * 14);
                                 if (noteIndex >= 0 && noteIndex < 14) currentActiveNotes.add(noteIndex);
@@ -183,25 +183,23 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (indexX > splitPoint) {
                                 // Base note from X position
                                 const normX = (indexX - splitPoint) / (1 - splitPoint);
-                                // Add 5% horizontal padding
-                                const padding = 0.05;
+                                // Increase horizontal padding to 10%
+                                const padding = 0.10;
                                 const normXAdjusted = (normX - padding) / (1 - 2 * padding);
                                 const baseNoteIndex = Math.floor(normXAdjusted * 14);
 
-                                // Pitch bend from Z position (depth)
-                                const zNeutral = -0.1; // Calibrated neutral position
-                                const zRange = 0.15;   // Sensitivity
-                                const zOffset = index.z - zNeutral;
-                                const semitoneOffset = Math.round((zOffset / zRange) * -5); // Closer = higher pitch
-                                const clampedOffset = Math.max(-5, Math.min(5, semitoneOffset));
-                                pitchBendOffset = clampedOffset; // Store for visual feedback
+                                if (baseNoteIndex >= 0 && baseNoteIndex < 14) {
+                                    // Pitch bend from Z position (depth)
+                                    const zNeutral = -0.1; // Calibrated neutral position
+                                    const zRange = 0.15;   // Sensitivity
+                                    const zOffset = index.z - zNeutral;
+                                    const semitoneOffset = (zOffset / zRange) * -5; // Closer = higher pitch
+                                    const clampedOffset = Math.max(-5, Math.min(5, semitoneOffset));
 
-                                // Final note with pitch bend
-                                const pitchBendedIndex = baseNoteIndex + clampedOffset;
-                                const finalIndex = Math.max(0, Math.min(13, pitchBendedIndex));
+                                    pitchBendOffset = Math.round(clampedOffset); // For display
+                                    audio.setDetune(clampedOffset * 100); // Continuous pitch bend (100 cents per semitone)
 
-                                if (finalIndex >= 0 && finalIndex < 14 && baseNoteIndex >= 0 && baseNoteIndex < 14) {
-                                    currentActiveNotes.add(finalIndex);
+                                    currentActiveNotes.add(baseNoteIndex);
                                 }
                             }
                         }
@@ -225,6 +223,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         activeNotes = currentActiveNotes;
         audio.setVolume(volume);
+
+        // Reset detune if no notes are active in Melody Mode (optional but safer)
+        if (activeNotes.size === 0 && !isChordsMode) {
+            audio.setDetune(0);
+        }
 
         // Update Visualizer with extra state
         visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, pitchBendOffset, hoveredNoteIndex, noteNames);

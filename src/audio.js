@@ -95,6 +95,11 @@ export class AudioEngine {
         this.volume.volume.value = db;
     }
 
+    setDetune(cents) {
+        if (!this.isInitialized) return;
+        this.sampler.detune.value = cents;
+    }
+
     stopAll() {
         if (!this.isInitialized) return;
 

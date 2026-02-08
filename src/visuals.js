@@ -21,7 +21,7 @@ export class Visualizer {
         // Recalculate key positions
         // Right 70% of screen starts at 0.3 * width
         const splitPointRatio = 0.30;
-        const paddingRatio = 0.05; // 5% horizontal padding on each side of the piano zone
+        const paddingRatio = 0.10; // 10% horizontal padding on each side for better tracking reliability
 
         const keyAreaStartFull = this.width * splitPointRatio;
         const keyAreaWidthFull = this.width * (1 - splitPointRatio);

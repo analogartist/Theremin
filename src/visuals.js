@@ -158,15 +158,24 @@ export class Visualizer {
         if (!isChordsMode) {
             this.ctx.font = 'bold 20px Outfit';
             this.ctx.fillStyle = isPitchBendEnabled ? '#00f2ff' : 'rgba(255,255,255,0.3)';
-            this.ctx.fillText(isPitchBendEnabled ? "BEND: READY" : "BEND: LOCKED", this.width * 0.65, 80);
+            const statusLabel = isPitchBendEnabled ? "BEND: READY ✌️" : "BEND: LOCKED 🔒";
+            this.ctx.fillText(statusLabel, this.width * 0.65, 80);
+
             this.ctx.font = '12px Outfit';
-            this.ctx.fillText("✌️ Left Peace Sign to Toggle", this.width * 0.65, 100);
+            this.ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            this.ctx.fillText("Left Hand Peace Sign to Toggle", this.width * 0.65, 105);
 
             if (isPitchBendEnabled && pitchBendOffset !== 0) {
                 const bendText = pitchBendOffset > 0 ? `+${pitchBendOffset}` : `${pitchBendOffset}`;
-                this.ctx.font = 'bold 32px Outfit';
+                this.ctx.font = 'bold 36px Outfit';
                 this.ctx.fillStyle = '#00f2ff';
                 this.ctx.fillText(`BEND: ${bendText}`, this.width * 0.65, 50);
+
+                // Add a dynamic glow around the value
+                this.ctx.shadowBlur = 15;
+                this.ctx.shadowColor = '#00f2ff';
+                this.ctx.fillText(`BEND: ${bendText}`, this.width * 0.65, 50);
+                this.ctx.shadowBlur = 0;
             }
         }
 

@@ -152,10 +152,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // 3. Pitch Bend Toggle (V-Sign / Peace Sign Gesture)
                     // Logic: Index and Middle extended, Ring and Pinky curled.
-                    const isVsign = (indexTip.y < indexPip.y) &&
-                        (middleTip.y < middlePip.y) &&
-                        (ringTip.y > ringPip.y) &&
-                        (pinkyTip.y > pinkyPip.y);
+                    // Using distance-based check for better robustness (works regardless of hand tilt)
+                    const distWristIndexTip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[8].x, 2) + Math.pow(landmarks[0].y - landmarks[8].y, 2));
+                    const distWristIndexPip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[6].x, 2) + Math.pow(landmarks[0].y - landmarks[6].y, 2));
+                    const distWristMiddleTip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[12].x, 2) + Math.pow(landmarks[0].y - landmarks[12].y, 2));
+                    const distWristMiddlePip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[10].x, 2) + Math.pow(landmarks[0].y - landmarks[10].y, 2));
+                    const distWristRingTip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[16].x, 2) + Math.pow(landmarks[0].y - landmarks[16].y, 2));
+                    const distWristRingPip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[14].x, 2) + Math.pow(landmarks[0].y - landmarks[14].y, 2));
+                    const distWristPinkyTip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[20].x, 2) + Math.pow(landmarks[0].y - landmarks[20].y, 2));
+                    const distWristPinkyPip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[18].x, 2) + Math.pow(landmarks[0].y - landmarks[18].y, 2));
+
+                    const isIndexExtended = distWristIndexTip > distWristIndexPip * 1.15;
+                    const isMiddleExtended = distWristMiddleTip > distWristMiddlePip * 1.15;
+                    const isRingCurled = distWristRingTip < distWristRingPip;
+                    const isPinkyCurled = distWristPinkyTip < distWristPinkyPip;
+
+                    const isVsign = isIndexExtended && isMiddleExtended && isRingCurled && isPinkyCurled;
 
                     if (isVsign && bendToggleCooldown === 0) {
                         isPitchBendEnabled = !isPitchBendEnabled;

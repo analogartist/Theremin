@@ -1,7 +1,7 @@
 export class AudioEngine {
     constructor() {
         this.sampler = null;
-        this.volume = null;
+        this.volumeNode = null; // Renamed to avoid confusion with the .volume property
         this.activeNotes = new Map(); // Map note name → true
         this.isInitialized = false;
     }
@@ -49,11 +49,11 @@ export class AudioEngine {
         });
 
         // Create volume control
-        this.volume = new Tone.Volume(0);
+        this.volumeNode = new Tone.Volume(0);
 
         // Connect sampler → volume → destination
-        this.sampler.connect(this.volume);
-        this.volume.toDestination();
+        this.sampler.connect(this.volumeNode);
+        this.volumeNode.toDestination();
 
         // Wait for samples to load
         await Tone.loaded();
@@ -63,7 +63,7 @@ export class AudioEngine {
     }
 
     playNote(frequency) {
-        if (!this.isInitialized) return;
+        if (!this.isInitialized || !this.sampler) return;
 
         // Convert frequency to note name (e.g., 440 → "A4")
         const note = Tone.Frequency(frequency, "hz").toNote();
@@ -75,7 +75,7 @@ export class AudioEngine {
     }
 
     stopNote(frequency) {
-        if (!this.isInitialized) return;
+        if (!this.isInitialized || !this.sampler) return;
 
         const note = Tone.Frequency(frequency, "hz").toNote();
 
@@ -86,22 +86,30 @@ export class AudioEngine {
     }
 
     setVolume(vol) {
-        if (!this.isInitialized) return;
+        if (!this.isInitialized || !this.volumeNode || !this.volumeNode.volume) return;
 
-        // Convert 0-1 range to decibels (-60 to 0)
-        // vol = 0 → -60dB (silent)
-        // vol = 1 → 0dB (full volume)
-        const db = vol === 0 ? -60 : Tone.gainToDb(vol);
-        this.volume.volume.value = db;
+        try {
+            // Convert 0-1 range to decibels (-60 to 0)
+            const db = vol === 0 ? -60 : Tone.gainToDb(vol);
+            this.volumeNode.volume.value = db;
+        } catch (e) {
+            console.error("AudioEngine: Error setting volume", e);
+        }
     }
 
     setDetune(cents) {
-        if (!this.isInitialized) return;
-        this.sampler.detune.value = cents;
+        // Extreme defensive check for .detune property
+        if (!this.isInitialized || !this.sampler || !this.sampler.detune) return;
+
+        try {
+            this.sampler.detune.value = cents;
+        } catch (e) {
+            console.error("AudioEngine: Error setting detune", e);
+        }
     }
 
     stopAll() {
-        if (!this.isInitialized) return;
+        if (!this.isInitialized || !this.sampler) return;
 
         this.activeNotes.forEach((_, note) => {
             this.sampler.triggerRelease(note);

@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let bendToggleCooldown = 0; // Debounce for the V-sign toggle
     let showUI = true; // Toggle for key lines and labels
     let uiToggleCooldown = 0; // Debounce for the UI toggle
+    let thumbsUpCounter = 0; // For triggering startup gesture
+    const STARTUP_THRESHOLD = 45; // ~1.5 seconds at 30fps
 
     // Callback for when hand tracking results are available
     const onResults = (results) => {
@@ -101,6 +103,30 @@ document.addEventListener('DOMContentLoaded', () => {
                             showUI = !showUI;
                             uiToggleCooldown = 60;
                             console.log("UI Visibility:", showUI ? "VISIBLE" : "HIDDEN");
+                        }
+
+                        // Startup Gesture Detection (Thumbs Up)
+                        if (!audioInitialized) {
+                            const thumbTip = landmarks[4];
+                            const thumbIp = landmarks[3];
+                            const fingerTips = [8, 12, 16, 20];
+                            const fingerPips = [6, 10, 14, 18];
+
+                            // Thumbs Up logic: Thumb is up, others are curled
+                            const isThumbUp = thumbTip.y < thumbIp.y;
+                            let fingerCurledCount = 0;
+                            fingerTips.forEach((id, idx) => {
+                                if (landmarks[id].y > landmarks[fingerPips[idx]].y) fingerCurledCount++;
+                            });
+
+                            if (isThumbUp && fingerCurledCount >= 3) {
+                                thumbsUpCounter++;
+                                if (thumbsUpCounter >= STARTUP_THRESHOLD) {
+                                    initializeAudio();
+                                }
+                            } else {
+                                thumbsUpCounter = Math.max(0, thumbsUpCounter - 2); // Rapid decay
+                            }
                         }
                     }
 
@@ -233,7 +259,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Update Visualizer
-            visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, pitchBendOffset, hoveredNoteIndex, noteNames, isPitchBendEnabled, showUI);
+            const startupProgress = audioInitialized ? 1 : thumbsUpCounter / STARTUP_THRESHOLD;
+            visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, pitchBendOffset, hoveredNoteIndex, noteNames, isPitchBendEnabled, showUI, audioInitialized, startupProgress);
         } catch (e) {
             console.error("CRITICAL ERROR in onResults:", e);
             throw e; // Rethrow to trigger unhandledrejection catcher with stack
@@ -253,19 +280,28 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingPanel.innerHTML = `<p>Error accessing camera: ${err.message}</p>`;
     });
 
-    // Start Audio Button
-    startBtn.addEventListener('click', async () => {
-        startBtn.textContent = 'Loading Piano...';
-        startBtn.disabled = true;
+    // Unified Audio Initialization
+    async function initializeAudio() {
+        if (audioInitialized) return;
         try {
+            console.log("Initializing Audio Engine...");
             await audio.init();
             audioInitialized = true;
-            startBtn.textContent = 'Piano Ready ✓';
-            startBtn.classList.add('active');
-            console.log("Piano audio engine initialized!");
+            console.log("Audio initialized successfully!");
         } catch (error) {
             console.error("Failed to initialize audio:", error);
-            startBtn.textContent = 'Audio Error';
+            // Fallback for browser blocking: Add click listener to whole window
+            const fallbackHandler = async () => {
+                try {
+                    await audio.init();
+                    audioInitialized = true;
+                    window.removeEventListener('click', fallbackHandler);
+                    console.log("Audio initialized via fallback click!");
+                } catch (e) {
+                    console.error("Fallback initialization failed:", e);
+                }
+            };
+            window.addEventListener('click', fallbackHandler, { once: true });
         }
-    });
+    }
 });

@@ -43,10 +43,16 @@ export class Visualizer {
         }
     }
 
-    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5, pitchBendOffset = 0, hoveredNoteIndex = null, noteNames = [], isPitchBendEnabled = true, showUI = true) {
+    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5, pitchBendOffset = 0, hoveredNoteIndex = null, noteNames = [], isPitchBendEnabled = true, showUI = true, audioInitialized = false, startupProgress = 0) {
         // Clear
-        this.ctx.fillStyle = 'rgba(15, 15, 19, 0.2)';
+        this.ctx.fillStyle = 'rgba(15, 15, 19, 0.4)'; // Slightly darker for startup
         this.ctx.fillRect(0, 0, this.width, this.height);
+
+        // Core Interaction Layer
+        if (!audioInitialized) {
+            this.drawStartupOverlay(startupProgress);
+            return; // Don't draw piano until ready
+        }
 
         // Draw Zone Backgrounds (Subtle highlights when hand is present)
         const splitX = this.width * 0.30;
@@ -320,5 +326,50 @@ export class Visualizer {
                 this.ctx.globalAlpha = 1.0;
             }
         }
+    }
+
+    drawStartupOverlay(progress) {
+        const cx = this.width / 2;
+        const cy = this.height / 2;
+
+        // 1. Progress Ring
+        const radius = 80;
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        this.ctx.lineWidth = 10;
+        this.ctx.stroke();
+
+        if (progress > 0) {
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy, radius, -Math.PI / 2, (-Math.PI / 2) + (Math.PI * 2 * progress));
+            this.ctx.strokeStyle = '#00f2ff';
+            this.ctx.lineWidth = 10;
+            this.ctx.lineCap = 'round';
+            this.ctx.stroke();
+
+            // Glow
+            this.ctx.shadowBlur = 15;
+            this.ctx.shadowColor = '#00f2ff';
+            this.ctx.stroke();
+            this.ctx.shadowBlur = 0;
+        }
+
+        // 2. Icon / Instruction
+        this.ctx.textAlign = 'center';
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = '60px Outfit';
+        this.ctx.fillText("👍", cx, cy + 20);
+
+        this.ctx.font = 'bold 24px Outfit';
+        const alpha = 0.5 + Math.sin(Date.now() / 300) * 0.3;
+        this.ctx.fillStyle = `rgba(0, 242, 255, ${alpha})`;
+        this.ctx.fillText("RIGHT HAND THUMBS-UP TO START", cx, cy + 130);
+
+        this.ctx.font = '16px Outfit';
+        this.ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        this.ctx.fillText("Hold for 1 second", cx, cy + 160);
+
+        this.ctx.textAlign = 'start'; // reset
     }
 }

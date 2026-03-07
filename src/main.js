@@ -53,6 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (loadingPanel && loadingPanel.style.display !== 'none') {
                 loadingPanel.style.display = 'none';
                 controlsPanel.classList.remove('hidden');
+                // Hide HTML overlay — canvas handles all UI from here
+                const overlay = document.querySelector('.overlay');
+                if (overlay) overlay.style.display = 'none';
             }
 
             // Update Cooldowns

@@ -43,7 +43,7 @@ export class Visualizer {
         }
     }
 
-    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5, pitchBendOffset = 0, hoveredNoteIndex = null, noteNames = [], isPitchBendEnabled = true, showUI = true, audioInitialized = false, startupProgress = 0) {
+    draw(results, activeNotes = [], isChordsMode = false, volume = 0.5, hoveredNoteIndex = null, noteNames = [], showUI = true, audioInitialized = false, startupProgress = 0) {
         // Clear
         this.ctx.fillStyle = 'rgba(15, 15, 19, 0.4)'; // Slightly darker for startup
         this.ctx.fillRect(0, 0, this.width, this.height);
@@ -166,33 +166,6 @@ export class Visualizer {
             this.ctx.fillText("PIANO KEYS", this.width * 0.4, 50);
         }
 
-        // Pitch Bend Indicator (Melody Mode only)
-        if (!isChordsMode) {
-            this.ctx.font = 'bold 20px Outfit';
-            this.ctx.fillStyle = isPitchBendEnabled ? '#00f2ff' : 'rgba(255,255,255,0.3)';
-            const statusLabel = isPitchBendEnabled ? "BEND: READY ✌️" : "BEND: LOCKED 🔒";
-            this.ctx.fillText(statusLabel, this.width * 0.65, 80);
-
-            if (showUI) {
-                this.ctx.font = '12px Outfit';
-                this.ctx.fillStyle = 'rgba(255,255,255,0.6)';
-                this.ctx.fillText("Left Hand Peace Sign to Toggle", this.width * 0.65, 105);
-            }
-
-            if (isPitchBendEnabled && pitchBendOffset !== 0) {
-                const bendText = pitchBendOffset > 0 ? `+${pitchBendOffset}` : `${pitchBendOffset}`;
-                this.ctx.font = 'bold 36px Outfit';
-                this.ctx.fillStyle = '#00f2ff';
-                this.ctx.fillText(`BEND: ${bendText}`, this.width * 0.65, 50);
-
-                // Add a dynamic glow around the value
-                this.ctx.shadowBlur = 15;
-                this.ctx.shadowColor = '#00f2ff';
-                this.ctx.fillText(`BEND: ${bendText}`, this.width * 0.65, 50);
-                this.ctx.shadowBlur = 0;
-            }
-        }
-
         // Draw Keys
         this.keys.forEach((key, index) => {
             const isActive = activeNotes.includes(index);
@@ -296,6 +269,7 @@ export class Visualizer {
     }
 
     addParticles(x, y, color = '#00f2ff') {
+        if (this.particles.length >= 200) return;
         for (let i = 0; i < 2; i++) {
             this.particles.push({
                 x: x,

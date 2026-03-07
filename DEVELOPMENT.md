@@ -11,7 +11,6 @@ The project is currently in a stable, polished state with professional audio qua
 - **Audio Engine (Tone.js)**: Professional sample-based playback using Salamander Grand Piano. Natural sustain, decay, and polyphony.
 - **Expressive Gestures**:
   - **Pinch-to-Slide Volume**: Relative motion adjustment with locking.
-  - **Depth-Based Pitch Bend**: ±5 semitone bend via Z-axis tracking (Melody Mode).
   - **Fist Mode Toggle**: Robust toggle between Melody and Chords.
 - **Visual System**:
   - **Strict Zoning**: 30/70 split with stylized dotted line.
@@ -35,7 +34,7 @@ Camera Feed → MediaPipe Hands → Landmarks (3D: x, y, z)
                     ↓                                   ↓
             Left Zone (x < 0.3)              Right Zone (x > 0.3)
                     ↓                                   ↓
-        Volume Control + Mode Toggle         Note + Pitch Control
+        Volume Control + Mode Toggle              Note Control
                     ↓                                   ↓
                     └─────────────────┬─────────────────┘
                                       ↓
@@ -44,8 +43,8 @@ Camera Feed → MediaPipe Hands → Landmarks (3D: x, y, z)
 
 ### Key Modules
 
-- **`src/main.js`**: Orchestrates state (volume, mode, pitch bend) and maps hand data to audio events.
-  - *Key Variables*: `volume`, `isChordsMode`, `pitchBendOffset`.
+- **`src/main.js`**: Orchestrates state (volume, mode) and maps hand data to audio events.
+  - *Key Variables*: `volume`, `isChordsMode`.
 - **`src/audio.js`**: Manages the Tone.js Sampler. Handles frequency-to-note mapping and ADSR envelopes.
 - **`src/visuals.js`**: Canvas renderer. Handles zone backgrounds, warnings, particles, and key highlights.
 - **`src/vision.js`**: MediaPipe Hands wrapper.
@@ -56,7 +55,6 @@ Camera Feed → MediaPipe Hands → Landmarks (3D: x, y, z)
 
 ### Calibration Checklist
 - **Volume**: Should stay locked when pinch is released.
-- **Pitch Bend**: Neutral position is calibrated to `Z = -0.1`. If hand is too far/close by default, adjust `zNeutral` in `main.js`.
 - **Toggle**: Fist requires 3+ fingers curled. Cooldown is 1 second (60 frames).
 
 ### Performance Tips

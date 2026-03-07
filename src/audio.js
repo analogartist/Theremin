@@ -98,18 +98,6 @@ export class AudioEngine {
         }
     }
 
-    setDetune(cents) {
-        // Extreme defensive check for .detune property
-        if (!this.isInitialized || !this.sampler || !this.sampler.detune) return;
-
-        try {
-            this.sampler.detune.value = cents;
-        } catch (e) {
-            console.error("AudioEngine: Error setting detune", e);
-            throw e; // Propagate for stack trace
-        }
-    }
-
     stopAll() {
         if (!this.isInitialized || !this.sampler) return;
 

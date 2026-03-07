@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const audio = new AudioEngine();
     const visualizer = new Visualizer(canvasElement);
 
+    // Constants
+    const PINCH_THRESHOLD = 0.05;
+    const LEFT_RIGHT_SPLIT = 0.3;
+    const HOVER_PADDING = 0.10;
+
     // B3 to E5 Chromatic Scale (1.5 octaves = 18 notes)
     // Formula: f = 440 * 2^((n-49)/12) where n is key number
     // B3 is ~246.94Hz
@@ -35,10 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let volumeGrabY = null; // Y position when pinch started
     let volumeGrabValue = 0.5; // Volume value when pinch started
     let audioInitialized = false; // Track if Tone.js is ready
-    let pitchBendOffset = 0; // Current pitch bend in semitones (-5 to +5)
     let hoveredNoteIndex = null; // Index of note hand is over (for guidance)
-    let isPitchBendEnabled = true; // Toggle for depth-based bending
-    let bendToggleCooldown = 0; // Debounce for the V-sign toggle
     let showUI = true; // Toggle for key lines and labels
     let uiToggleCooldown = 0; // Debounce for the UI toggle
     let thumbsUpCounter = 0; // For triggering startup gesture
@@ -55,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Update Cooldowns
             if (modeToggleCooldown > 0) modeToggleCooldown--;
-            if (bendToggleCooldown > 0) bendToggleCooldown--;
             if (uiToggleCooldown > 0) uiToggleCooldown--;
 
             // Process Hands
@@ -78,12 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         const index = landmarks[8];
                         if (index) {
                             const indexX = 1.0 - index.x;
-                            const splitPoint = 0.3;
-                            if (indexX > splitPoint) {
-                                const normX = (indexX - splitPoint) / (1 - splitPoint);
-                                // Increase horizontal padding to 10% for better edge reliability
-                                const padding = 0.10;
-                                const normXAdjusted = (normX - padding) / (1 - 2 * padding);
+                            if (indexX > LEFT_RIGHT_SPLIT) {
+                                const normX = (indexX - LEFT_RIGHT_SPLIT) / (1 - LEFT_RIGHT_SPLIT);
+                                const normXAdjusted = (normX - HOVER_PADDING) / (1 - 2 * HOVER_PADDING);
                                 hoveredNoteIndex = Math.floor(normXAdjusted * 9);
                                 if (hoveredNoteIndex < 0) hoveredNoteIndex = null;
                                 if (hoveredNoteIndex >= 9) hoveredNoteIndex = null;
@@ -130,11 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-                    // Strict 30% / 70% Split
-                    const splitPoint = 0.3;
                     const x = 1.0 - wrist.x;
 
-                    if (x < splitPoint) {
+                    if (x < LEFT_RIGHT_SPLIT) {
                         // --- LEFT ZONE: CONTROL (0% - 30%) ---
                         const thumb = landmarks[4];
                         const index = landmarks[8];
@@ -143,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // 1. Volume Control
                         const pinchDist = Math.sqrt(Math.pow(thumb.x - index.x, 2) + Math.pow(thumb.y - index.y, 2));
 
-                        if (pinchDist < 0.05) {
+                        if (pinchDist < PINCH_THRESHOLD) {
                             if (volumeGrabY === null) {
                                 volumeGrabY = wrist.y;
                                 volumeGrabValue = volume;
@@ -153,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         } else {
                             volumeGrabY = null;
-                            volumeGrabValue = volume;
+                            volumeGrabValue = null;
                         }
 
                         // 2. Mode Toggle (Fist)
@@ -170,28 +166,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             modeToggleCooldown = 60;
                         }
 
-                        // 3. Pitch Bend Toggle (V-Sign)
-                        const distWristIndexTip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[8].x, 2) + Math.pow(landmarks[0].y - landmarks[8].y, 2));
-                        const distWristIndexPip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[6].x, 2) + Math.pow(landmarks[0].y - landmarks[6].y, 2));
-                        const distWristMiddleTip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[12].x, 2) + Math.pow(landmarks[0].y - landmarks[12].y, 2));
-                        const distWristMiddlePip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[10].x, 2) + Math.pow(landmarks[0].y - landmarks[10].y, 2));
-                        const distWristRingTip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[16].x, 2) + Math.pow(landmarks[0].y - landmarks[16].y, 2));
-                        const distWristRingPip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[14].x, 2) + Math.pow(landmarks[0].y - landmarks[14].y, 2));
-                        const distWristPinkyTip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[20].x, 2) + Math.pow(landmarks[0].y - landmarks[20].y, 2));
-                        const distWristPinkyPip = Math.sqrt(Math.pow(landmarks[0].x - landmarks[18].x, 2) + Math.pow(landmarks[0].y - landmarks[18].y, 2));
-
-                        const isIndexExtended = distWristIndexTip > distWristIndexPip * 1.15;
-                        const isMiddleExtended = distWristMiddleTip > distWristMiddlePip * 1.15;
-                        const isRingCurled = distWristRingTip < distWristRingPip;
-                        const isPinkyCurled = distWristPinkyTip < distWristPinkyPip;
-
-                        const isVsign = isIndexExtended && isMiddleExtended && isRingCurled && isPinkyCurled;
-
-                        if (isVsign && bendToggleCooldown === 0) {
-                            isPitchBendEnabled = !isPitchBendEnabled;
-                            bendToggleCooldown = 60;
-                        }
-
                     } else {
                         // --- RIGHT ZONE: NOTES (30% - 100%) ---
                         if (isChordsMode) {
@@ -199,10 +173,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             tipIds.forEach((tipId) => {
                                 const tip = landmarks[tipId];
                                 const tipX = 1.0 - tip.x;
-                                if (tipX > splitPoint) {
-                                    const normX = (tipX - splitPoint) / (1 - splitPoint);
-                                    const padding = 0.10;
-                                    const normXAdjusted = (normX - padding) / (1 - 2 * padding);
+                                if (tipX > LEFT_RIGHT_SPLIT) {
+                                    const normX = (tipX - LEFT_RIGHT_SPLIT) / (1 - LEFT_RIGHT_SPLIT);
+                                    const normXAdjusted = (normX - HOVER_PADDING) / (1 - 2 * HOVER_PADDING);
                                     const noteIndex = Math.floor(normXAdjusted * 9);
                                     if (noteIndex >= 0 && noteIndex < 9) currentActiveNotes.add(noteIndex);
                                 }
@@ -212,28 +185,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             const index = landmarks[8];
                             const dist = Math.sqrt(Math.pow(thumb.x - index.x, 2) + Math.pow(thumb.y - index.y, 2));
 
-                            if (dist < 0.05) {
+                            if (dist < PINCH_THRESHOLD) {
                                 const indexX = 1.0 - index.x;
-                                if (indexX > splitPoint) {
-                                    const normX = (indexX - splitPoint) / (1 - splitPoint);
-                                    const padding = 0.10;
-                                    const normXAdjusted = (normX - padding) / (1 - 2 * padding);
+                                if (indexX > LEFT_RIGHT_SPLIT) {
+                                    const normX = (indexX - LEFT_RIGHT_SPLIT) / (1 - LEFT_RIGHT_SPLIT);
+                                    const normXAdjusted = (normX - HOVER_PADDING) / (1 - 2 * HOVER_PADDING);
                                     const baseNoteIndex = Math.floor(normXAdjusted * 9);
 
                                     if (baseNoteIndex >= 0 && baseNoteIndex < 9) {
-                                        const zNeutral = -0.1;
-                                        const zRange = 0.15;
-                                        const zOffset = index.z - zNeutral;
-                                        const semitoneOffset = (zOffset / zRange) * -5;
-                                        const clampedOffset = Math.max(-5, Math.min(5, semitoneOffset));
-
-                                        if (isPitchBendEnabled) {
-                                            pitchBendOffset = Math.round(clampedOffset);
-                                            audio.setDetune(clampedOffset * 100);
-                                        } else {
-                                            pitchBendOffset = 0;
-                                            audio.setDetune(0);
-                                        }
                                         currentActiveNotes.add(baseNoteIndex);
                                     }
                                 }
@@ -254,13 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
             activeNotes = currentActiveNotes;
             audio.setVolume(volume);
 
-            if (activeNotes.size === 0 && !isChordsMode) {
-                audio.setDetune(0);
-            }
-
             // Update Visualizer
             const startupProgress = audioInitialized ? 1 : thumbsUpCounter / STARTUP_THRESHOLD;
-            visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, pitchBendOffset, hoveredNoteIndex, noteNames, isPitchBendEnabled, showUI, audioInitialized, startupProgress);
+            visualizer.draw(results, Array.from(activeNotes), isChordsMode, volume, hoveredNoteIndex, noteNames, showUI, audioInitialized, startupProgress);
         } catch (e) {
             console.error("CRITICAL ERROR in onResults:", e);
             throw e; // Rethrow to trigger unhandledrejection catcher with stack
@@ -290,12 +245,17 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Audio initialized successfully!");
         } catch (error) {
             console.error("Failed to initialize audio:", error);
-            // Fallback for browser blocking: Add click listener to whole window
+
+            const notice = document.createElement('div');
+            notice.style.cssText = 'position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#00f2ff;padding:12px 24px;border-radius:8px;font-family:Outfit,sans-serif;font-size:16px;z-index:1000;pointer-events:none;';
+            notice.textContent = 'Tap anywhere to enable audio';
+            document.body.appendChild(notice);
+
             const fallbackHandler = async () => {
                 try {
                     await audio.init();
                     audioInitialized = true;
-                    window.removeEventListener('click', fallbackHandler);
+                    notice.remove();
                     console.log("Audio initialized via fallback click!");
                 } catch (e) {
                     console.error("Fallback initialization failed:", e);

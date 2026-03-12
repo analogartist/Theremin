@@ -1,4 +1,4 @@
-# Air Piano - Virtual Theremin Hybrid
+# Piano Theremin Hybrid
 
 An innovative musical instrument that transforms hand gestures into sound using computer vision. Play music in the air with intuitive gesture controls—no physical contact required.
 
